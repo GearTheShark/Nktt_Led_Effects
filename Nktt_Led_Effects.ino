@@ -1,7 +1,8 @@
 #include <FastLED.h>
 
 #define LED_DT1 4
-#define LED_COUNT 118
+#define LED_DT2 5
+#define LED_COUNT 28
 #define BTN_PIN 0
 #define INTER_PIN 3
 
@@ -20,18 +21,21 @@ byte loadDelay = 100; // 0-255
 byte flashDelay = 100; // 0-255
 byte breathMultip[] = {4, 8, 10}; // 0-32767
 float flashMultip[] = {0.9850, 0.9200, 0.8000}; // 0-32767
-int bpms[] = {120, 174, 450}; // 1-1000
+int bpms[] = {120, 175, 450}; // 1-1000
 byte bpmsSize = 3; // количество bpms и breathMultip
 
 bool goesUP = false; // бул для затухания
 uint32_t tmr1; //таймер для вспышек
 double logBase = 0.95; //коэффициент логарифма затухания вспышки
+byte currentLed = 0;
 
 CRGB leds[LED_COUNT];
+int ledsX[LED_COUNT][3];
 
 void setup() {
   Serial.begin(9600);
   FastLED.addLeds<NEOPIXEL, LED_DT1>(leds, LED_COUNT);
+  FastLED.addLeds<NEOPIXEL, LED_DT2>(leds, LED_COUNT);
   pinMode(BTN_PIN, INPUT);
   pinMode(INTER_PIN, INPUT);
   delay(250);
@@ -52,14 +56,14 @@ void setup() {
 
 void loop() {
   digitalWrite(led_pin, HIGH);
-  //buttonState = analogRead(BTN_PIN);
-  //Serial.println(buttonState);
+  buttonState = analogRead(BTN_PIN);
+  Serial.println(buttonState);
   switch (mode) {
     case 1: one_color();  break;
     case 2: breathing(); break;
     case 3: flash(); break;
     case 4: strobe(); break;
-    case 5: loading(); break;
+    case 5: one_color_all(0, 0, 0); colorWipe(0xff, 0xff, 0xff); colorWipe(0x00, 0x00, 0x00); break;
   }
 }
 
@@ -69,6 +73,7 @@ void swap() {
     digitalWrite(led_pin, LOW);
     debounce = millis();
     buttonState = analogRead(BTN_PIN);
+    Serial.println(buttonState);
     if (buttonState >= 700) {                      //загрузка  (постепенно загорается от плеча полностью и оттуда же так же гаснет)
       mode = 5;
     }
@@ -81,7 +86,7 @@ void swap() {
       }
       mode = 4;
     }
-    if (buttonState >= 310 && buttonState < 450) { //вспышка 3 скорости (мнгровенно загорается и медленно гаснет)
+    if (buttonState >= 300 && buttonState < 450) { //вспышка 3 скорости (мнгровенно загорается и медленно гаснет)
       if (mode == 3) {
         effectSpeed = ++effectSpeed;
         if (effectSpeed >= 4) {
@@ -90,7 +95,7 @@ void swap() {
       }
       mode = 3;
     }
-    if (buttonState >= 250 && buttonState < 310) { //дыхание 3 скорости
+    if (buttonState >= 220 && buttonState < 300) { //дыхание 3 скорости
       if (mode == 2) {
         effectSpeed = ++effectSpeed;
         if (effectSpeed >= 4) {
@@ -99,7 +104,7 @@ void swap() {
       }
       mode = 2;
     }
-    if (buttonState >= 150 && buttonState < 250) { //статика и выкл
+    if (buttonState >= 120 && buttonState < 210) { //статика и выкл
       if (mode != 1) {
         submode = false;
       }
@@ -111,12 +116,6 @@ void swap() {
         submode = true;
       }
     }
-    //buttonState = analogRead(BTN_PIN);
-    //Serial.println(buttonState);
-    //   Serial.print("buttonState");
-    //  Serial.println(buttonState);
-    // Serial.print("mode");
-    // Serial.println(mode);
   }
 }
 void one_color() {
@@ -140,7 +139,7 @@ void breathing() {
     brightValue = 255;
   }
   for (int i = 0 ; i < LED_COUNT; i++ ) {
-    leds[i].setRGB(brightValue, 0, 0);
+    leds[i].setRGB(brightValue, brightValue, brightValue);
   }
   FastLED.show();
   if (goesUP == true) {
@@ -190,17 +189,16 @@ void strobe() {
   }
 }
 
-void loading() {
-  for (int i = 0; i < LED_COUNT; i++) {
-    leds[i].setRGB(255, 255, 255);
-    leds[i + 1].setRGB(60, 60, 60);
-    leds[i + 2].setRGB(15, 15, 15);
+void colorWipe(byte red, byte green, byte blue) {
+  for (uint16_t i = 0; i < LED_COUNT && mode == 5; i++) {
+    setPixel(i, red, green, blue);
     FastLED.show();
-    delay(100);
+    delay(35);
   }
-  for (int i = 0; i < LED_COUNT; i++) {
-    leds[i].setRGB(0, 0, 0);
-    FastLED.show();
-    delay(100);
-  }
+}
+
+void setPixel(int Pixel, byte red, byte green, byte blue) {
+  leds[Pixel].r = red;
+  leds[Pixel].g = green;
+  leds[Pixel].b = blue;
 }
