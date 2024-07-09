@@ -2,7 +2,7 @@
 
 #define LED_DT1 4
 #define LED_DT2 5
-#define LED_COUNT 28
+#define LED_COUNT 59
 #define BTN_PIN 0
 #define INTER_PIN 3
 
@@ -72,12 +72,12 @@ void swap() {
   if (millis() - debounce >= 250 && digitalRead(2)) {
     digitalWrite(led_pin, LOW);
     debounce = millis();
-    buttonState = analogRead(BTN_PIN);
-    Serial.println(buttonState);
-    if (buttonState >= 700) {                      //загрузка  (постепенно загорается от плеча полностью и оттуда же так же гаснет)
+ //   buttonState = analogRead(BTN_PIN);
+  //  Serial.println(buttonState);
+    if (buttonState >= 850) {                      //загрузка  (постепенно загорается от плеча полностью и оттуда же так же гаснет)
       mode = 5;
     }
-    if (buttonState >= 450 && buttonState < 700) { //страб 3 скорости (режим эпилепсии)
+    if (buttonState >= 590 && buttonState < 850) { //страб 3 скорости (режим эпилепсии)
       if (mode == 4) {
         effectSpeed = ++effectSpeed;
         if (effectSpeed >= 4) {
@@ -86,7 +86,7 @@ void swap() {
       }
       mode = 4;
     }
-    if (buttonState >= 300 && buttonState < 450) { //вспышка 3 скорости (мнгровенно загорается и медленно гаснет)
+    if (buttonState >= 420 && buttonState < 590) { //вспышка 3 скорости (мнгровенно загорается и медленно гаснет)
       if (mode == 3) {
         effectSpeed = ++effectSpeed;
         if (effectSpeed >= 4) {
@@ -95,7 +95,7 @@ void swap() {
       }
       mode = 3;
     }
-    if (buttonState >= 220 && buttonState < 300) { //дыхание 3 скорости
+    if (buttonState >= 270 && buttonState < 420) { //дыхание 3 скорости
       if (mode == 2) {
         effectSpeed = ++effectSpeed;
         if (effectSpeed >= 4) {
@@ -104,7 +104,7 @@ void swap() {
       }
       mode = 2;
     }
-    if (buttonState >= 120 && buttonState < 210) { //статика и выкл
+    if (buttonState >= 120 && buttonState < 270) { //статика и выкл
       if (mode != 1) {
         submode = false;
       }
@@ -163,7 +163,7 @@ void flash() {
     brightValue = 255;
   }
   brightValue = brightValue * flashMultip[effectSpeed - 1];
-  Serial.println(brightValue);
+  //Serial.println(brightValue);
   for (int i = 0 ; i < LED_COUNT; i++ ) {
     leds[i].setRGB(brightValue, brightValue, brightValue);
   }
@@ -193,6 +193,8 @@ void colorWipe(byte red, byte green, byte blue) {
   for (uint16_t i = 0; i < LED_COUNT && mode == 5; i++) {
     setPixel(i, red, green, blue);
     FastLED.show();
+      buttonState = analogRead(BTN_PIN);
+  Serial.println(buttonState);
     delay(35);
   }
 }
